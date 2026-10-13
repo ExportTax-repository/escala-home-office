@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Escala Home Office · ADM</title>
+<link rel="icon" type="image/png" href="assets/adm-logo.png">
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<div class="page">
+    <div class="topline">
+        <p class="classification">Classificação: <strong>Uso interno</strong></p>
+        <img class="logo" src="assets/adm-logo.png" alt="ADM">
+    </div>
+
+    <div class="section-mark" aria-hidden="true"><span class="num">1</span><span class="txt">Escala de home office</span></div>
+    <h1 id="pageTitle">Quem está em home office</h1>
+    <p class="lead" id="pageLead"></p>
+
+    <div class="toolbar" role="search">
+        <label class="field">
+            <span>Time</span>
+            <select id="filterTeam"></select>
+        </label>
+        <label class="field">
+            <span>Destacar pessoa</span>
+            <div class="search-wrap">
+                <input id="personSearch" list="peopleNames" placeholder="Digite um nome" autocomplete="off">
+                <button type="button" class="search-clear" id="personSearchClear" aria-label="Limpar destaque" hidden>×</button>
+            </div>
+            <datalist id="peopleNames"></datalist>
+        </label>
+        <label class="field">
+            <span>Ano</span>
+            <select id="yearSelect"></select>
+        </label>
+        <span class="spacer"></span>
+        <button type="button" class="btn btn-secondary" id="printBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9V3h12v6M6 18H4a1 1 0 0 1-1-1v-6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v6a1 1 0 0 1-1 1h-2"/><path d="M6 14h12v7H6z"/></svg>
+            Imprimir
+        </button>
+        <button type="button" class="btn btn-primary" id="openManage">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M17 11h5M19.5 8.5v5"/></svg>
+            Gerenciar equipe
+        </button>
+    </div>
+
+    <section class="today" aria-labelledby="todayDate">
+        <div class="card today-main" id="todayCard"></div>
+    </section>
+
+    <div class="section-mark" aria-hidden="true"><span class="num">2</span><span class="txt">Calendário</span></div>
+    <div class="cal-head">
+        <h2 id="calTitle">Escala do mês</h2>
+        <ul class="legend">
+            <li><span class="swatch verde"></span>Grupo Verde em home office</li>
+            <li><span class="swatch amarelo"></span>Grupo Amarelo em home office</li>
+            <li><span class="swatch branco"></span>Fixos não entram no rodízio</li>
+        </ul>
+    </div>
+    <div class="month-tabs" role="tablist" aria-label="Mês" id="monthTabs"></div>
+    <div id="calendar"></div>
+
+    <footer class="footer">
+        <div class="footer-line">
+            <span><strong>ADM</strong> · <span id="footerOrg">Escala de home office</span></span>
+            <span id="saveStatus">Dados salvos neste navegador</span>
+        </div>
+        <img class="stripe" src="assets/faixa-adm.jpg" alt="">
+    </footer>
+</div>
+
+<!-- Painel: Gerenciar equipe -->
+<dialog class="drawer" id="manageDialog" aria-labelledby="manageTitle">
+    <div class="drawer-head">
+        <h2 id="manageTitle">Gerenciar equipe</h2>
+        <button type="button" class="btn btn-ghost" id="closeManage">Fechar</button>
+    </div>
+    <div class="drawer-tabs" role="tablist">
+        <button type="button" class="month-tab" role="tab" data-panel="panelPeople" aria-selected="true">Pessoas</button>
+        <button type="button" class="month-tab" role="tab" data-panel="panelTeams" aria-selected="false">Times</button>
+        <button type="button" class="month-tab" role="tab" data-panel="panelBackup" aria-selected="false">Backup</button>
+    </div>
+    <div class="drawer-body">
+        <!-- Pessoas -->
+        <div class="panel" id="panelPeople" role="tabpanel">
+            <div class="block">
+                <h3>Adicionar pessoa</h3>
+                <form id="personForm" class="form-row" novalidate>
+                    <label class="field"><span>Nome</span><input id="personName" maxlength="60" required></label>
+                    <label class="field"><span>Time</span><select id="teamSelect" required></select></label>
+                    <label class="field" style="flex:0 1 140px"><span>Grupo</span>
+                        <select id="colorSelect">
+                            <option value="verde">Verde</option>
+                            <option value="amarelo">Amarelo</option>
+                            <option value="branco">Fixo</option>
+                        </select>
+                    </label>
+                    <button type="submit" class="btn btn-primary">Adicionar</button>
+                </form>
+            </div>
+            <div class="block">
+                <h3>Pessoas cadastradas</h3>
+                <p class="counts" id="peopleCounts"></p>
+                <input type="search" class="list-filter" id="peopleFilter" placeholder="Filtrar por nome ou time" aria-label="Filtrar pessoas">
+                <table class="data">
+                    <thead><tr><th>Nome</th><th>Time</th><th>Grupo</th><th class="act"><span class="sr-only">Ações</span></th></tr></thead>
+                    <tbody id="peopleTbody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Times -->
+        <div class="panel" id="panelTeams" role="tabpanel" hidden>
+            <div class="block">
+                <h3>Adicionar time</h3>
+                <form id="teamForm" class="form-row" novalidate>
+                    <label class="field"><span>Nome do time</span><input id="newTeamInput" maxlength="60" required></label>
+                    <button type="submit" class="btn btn-primary">Adicionar</button>
+                </form>
+            </div>
+            <div class="block">
+                <h3>Times</h3>
+                <p class="help">Ao excluir um time, as pessoas dele ficam como "Sem Time" e continuam cadastradas.</p>
+                <table class="data">
+                    <thead><tr><th>Time</th><th>Pessoas</th><th class="act"><span class="sr-only">Ações</span></th></tr></thead>
+                    <tbody id="teamsTbody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Backup -->
+        <div class="panel" id="panelBackup" role="tabpanel" hidden>
+            <div class="block">
+                <h3>Baixar backup</h3>
+                <p class="help">Os dados ficam só neste navegador. Baixe um backup com frequência e guarde em uma pasta da rede ou do OneDrive.</p>
+                <button type="button" class="btn btn-primary" id="downloadBtn">Baixar backup (.json)</button>
+            </div>
+            <div class="block">
+                <h3>Restaurar backup</h3>
+                <p class="help">O arquivo é conferido antes de substituir qualquer dado. Uma cópia dos dados atuais é guardada automaticamente.</p>
+                <input type="file" id="restoreFile" accept=".json,application/json">
+                <div id="restoreSummary" hidden></div>
+            </div>
+            <div class="block" id="undoBlock" hidden>
+                <h3>Desfazer a última restauração</h3>
+                <p class="help" id="undoInfo"></p>
+                <button type="button" class="btn btn-secondary" id="undoRestoreBtn">Voltar aos dados anteriores</button>
+            </div>
+            <p class="note">Senha para exclusão: <strong id="senhaInfo"></strong></p>
+        </div>
+    </div>
+</dialog>
+
+<!-- Modal: senha -->
+<dialog class="modal" id="pwDialog" aria-labelledby="pwTitle">
+    <form method="dialog" id="pwForm">
+        <h2 id="pwTitle">Confirmar exclusão</h2>
+        <p id="pwMsg"></p>
+        <label class="field"><span>Senha</span><input type="password" id="pwInput" autocomplete="off"></label>
+        <div class="err" id="pwErr" role="alert"></div>
+        <div class="actions">
+            <button type="button" class="btn btn-secondary" id="pwCancel">Cancelar</button>
+            <button type="submit" class="btn btn-danger" id="pwOk">Excluir</button>
+        </div>
+    </form>
+</dialog>
+
+<div class="toasts" id="toasts" aria-live="polite"></div>
+
+
+<!-- Ordem importa: configuração → regras → dados → interface → aplicação -->
+<script src="js/config.js"></script>
+<script src="js/escala.js"></script>
+<script src="js/dados.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
