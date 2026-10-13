@@ -2,9 +2,7 @@
 
 Ferramenta web para consultar quem está em home office em cada dia útil, no rodízio entre os grupos **Verde** e **Amarelo**. Roda direto no navegador: sem instalação, sem servidor, sem banco de dados e sem bibliotecas externas.
 
-**Acesse:** https://SEU-USUARIO.github.io/escala-home-office/
-
-![Tela da Escala Home Office](docs/preview.png)
+**Acesse:** https://exporttax-repository.github.io/escala-home-office/
 
 ## O que a ferramenta faz
 
