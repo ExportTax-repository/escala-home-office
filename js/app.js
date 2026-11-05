@@ -1,36 +1,22 @@
 /* =====================================================================
-   APP — renderização das telas e eventos
+   APP — renderização das telas e eventos (somente consulta)
    Depende de: config.js, escala.js, dados.js, ui.js
    ===================================================================== */
 
 (() => {
     'use strict';
 
-    const { el, amostra, botaoExcluir, aviso } = UI;
+    const { el, amostra } = UI;
     const G = Escala.GRUPOS;
     const $ = id => document.getElementById(id);
 
-    /* Estado da tela (lembrado no navegador; os nomes das chaves seguem a v4) */
-    const tela = Object.assign({ team: 'all', year: null, month: null, focusId: null }, Dados.lerTela());
-    const guardarTela = () => Dados.gravarTela(tela);
-
-    let restauracaoPendente = null;
+    const tela = { team: 'all', year: null, month: null, focusId: null };
 
     /* ---------- Consultas ---------- */
     const doFiltro = p => tela.team === 'all' || p.team === tela.team;
     const porNome = (a, b) => String(a.name).localeCompare(String(b.name), 'pt-BR');
     const doGrupo = g => Dados.pessoas.filter(p => p.color === g && doFiltro(p)).sort(porNome);
     const pessoaEmFoco = () => Dados.pessoas.find(p => p.id === tela.focusId) || null;
-
-    function informarSalvo(resultado) {
-        const status = $('saveStatus');
-        if (resultado && resultado.salvo === false) {
-            status.textContent = 'Não foi possível salvar no navegador';
-            aviso('Não foi possível salvar no navegador. Baixe um backup agora para não perder as alterações.', 'error', 8000);
-        } else {
-            status.textContent = 'Salvo neste navegador às ' + new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-        }
-    }
 
     /* =================================================================
        RENDERIZAÇÃO
@@ -40,7 +26,6 @@
         renderHoje();
         renderAbasMes();
         renderCalendario();
-        renderGerenciar();
     }
 
     function renderFiltros() {
@@ -111,7 +96,7 @@
         if (tela.month !== 'all' && !meses.includes(tela.month)) tela.month = meses[0];
         const t = Escala.hoje();
 
-        const selecionar = m => () => { tela.month = m; guardarTela(); renderAbasMes(); renderCalendario(); };
+        const selecionar = m => () => { tela.month = m; renderAbasMes(); renderCalendario(); };
         abas.replaceChildren(
             ...meses.map(m => {
                 const atual = tela.year === t.getFullYear() && m === t.getMonth();
@@ -140,7 +125,7 @@
         if (!Dados.pessoas.filter(doFiltro).some(p => p.color !== 'branco')) {
             area.append(el('div', { class: 'empty-state' }, [
                 el('strong', { text: 'Nenhuma pessoa no rodízio' }),
-                'Adicione pessoas aos grupos Verde ou Amarelo em Gerenciar equipe.'
+                'Não há pessoas nos grupos Verde ou Amarelo neste filtro.'
             ]));
         }
 
@@ -185,180 +170,25 @@
         ]);
     }
 
-    function renderGerenciar() {
-        const times = Dados.times, pessoas = Dados.pessoas;
-
-        // Select de time no formulário
-        const sel = $('teamSelect');
-        const atual = sel.value;
-        sel.replaceChildren(el('option', { value: '', text: 'Escolha o time' }), ...times.map(t => el('option', { value: t, text: t })));
-        if (times.includes(atual)) sel.value = atual;
-        else if (tela.team !== 'all') sel.value = tela.team;
-        else if (times.length === 1) sel.value = times[0];
-
-        // Contagem por grupo
-        $('peopleCounts').replaceChildren(
-            el('span', null, [el('b', { text: pessoas.length }), ' pessoas']),
-            ...['verde', 'amarelo', 'branco'].map(k => el('span', null, [amostra(k), G[k] + ' ', el('b', { text: pessoas.filter(p => p.color === k).length })]))
-        );
-
-        // Tabela de pessoas
-        const q = $('peopleFilter').value.trim().toLowerCase();
-        const linhas = pessoas
-            .filter(p => !q || String(p.name).toLowerCase().includes(q) || String(p.team).toLowerCase().includes(q))
-            .slice().sort((a, b) => String(a.team).localeCompare(String(b.team), 'pt-BR') || porNome(a, b));
-        $('peopleTbody').replaceChildren(...(linhas.length ? linhas.map(p => el('tr', null, [
-            el('td', { text: p.name }),
-            el('td', { text: p.team }),
-            el('td', null, [el('span', { class: 'tag' }, [amostra(p.color), G[p.color] || p.color])]),
-            el('td', { class: 'act' }, [botaoExcluir('Excluir ' + p.name, () => excluirPessoa(p.id))])
-        ])) : [el('tr', null, [el('td', { colspan: '4', text: q ? 'Nenhuma pessoa encontrada.' : 'Nenhuma pessoa cadastrada.' })])]));
-
-        // Tabela de times
-        $('teamsTbody').replaceChildren(...(times.length ? times.map(t => el('tr', null, [
-            el('td', { text: t }),
-            el('td', { text: pessoas.filter(p => p.team === t).length }),
-            el('td', { class: 'act' }, [botaoExcluir('Excluir time ' + t, () => excluirTime(t))])
-        ])) : [el('tr', null, [el('td', { colspan: '3', text: 'Nenhum time cadastrado.' })])]));
-
-        // Desfazer restauração
-        const anterior = Dados.copiaAnterior();
-        $('undoBlock').hidden = !anterior;
-        if (anterior) {
-            const quando = anterior.savedAt ? new Date(anterior.savedAt).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }) : '';
-            $('undoInfo').textContent = 'Cópia guardada ' + (quando ? 'em ' + quando + ' ' : '') + 'com ' + (anterior.people ? anterior.people.length : 0) + ' pessoa(s).';
-        }
-    }
-
-    /* =================================================================
-       AÇÕES
-       ================================================================= */
-    function adicionarTime(e) {
-        e.preventDefault();
-        const input = $('newTeamInput');
-        const r = Dados.adicionarTime(input.value);
-        if (r.erro) { aviso(r.erro, 'error'); input.focus(); return; }
-        aviso('Time "' + input.value.trim() + '" adicionado.');
-        input.value = '';
-        informarSalvo(r); renderTudo();
-    }
-
-    async function excluirTime(nome) {
-        const n = Dados.pessoas.filter(p => p.team === nome).length;
-        const msg = 'Excluir o time "' + nome + '"?' + (n ? ' ' + n + (n === 1 ? ' pessoa ficará' : ' pessoas ficarão') + ' como "Sem Time".' : '');
-        if (!(await UI.pedirSenha(msg))) return;
-        const r = Dados.removerTime(nome);
-        if (tela.team === nome) { tela.team = 'all'; guardarTela(); }
-        informarSalvo(r); renderTudo();
-        aviso('Time "' + nome + '" excluído.');
-    }
-
-    function adicionarPessoa(e) {
-        e.preventDefault();
-        const nome = $('personName');
-        const grupo = $('colorSelect').value;
-        const r = Dados.adicionarPessoa(nome.value, $('teamSelect').value, grupo);
-        if (r.erro) { aviso(r.erro, 'error'); nome.focus(); return; }
-        aviso(nome.value.trim() + ' adicionado(a) ao grupo ' + G[grupo] + '.');
-        nome.value = '';
-        nome.focus();
-        informarSalvo(r); renderTudo();
-    }
-
-    async function excluirPessoa(id) {
-        const p = Dados.pessoas.find(x => x.id === id);
-        if (!p) return;
-        if (!(await UI.pedirSenha('Excluir ' + p.name + ' (' + p.team + ')?'))) return;
-        const r = Dados.removerPessoa(id);
-        if (tela.focusId === id) { tela.focusId = null; guardarTela(); }
-        informarSalvo(r); renderTudo();
-        aviso(p.name + ' excluído(a).');
-    }
-
-    function baixarBackup() {
-        aviso('Backup baixado: ' + Dados.baixarBackup());
-    }
-
-    function lerArquivoRestauracao(e) {
-        const caixa = $('restoreSummary');
-        const arquivo = e.target.files[0];
-        restauracaoPendente = null;
-        caixa.hidden = true;
-        if (!arquivo) return;
-
-        const leitor = new FileReader();
-        leitor.onload = ev => {
-            caixa.hidden = false;
-            try {
-                const v = Dados.validarBackup(JSON.parse(ev.target.result));
-                restauracaoPendente = v;
-                const n = k => v.people.filter(p => p.color === k).length;
-                caixa.className = 'restore-summary';
-                caixa.replaceChildren(
-                    el('div', { text: 'Arquivo "' + arquivo.name + '": ' + v.teams.length + ' time(s) e ' + v.people.length + ' pessoa(s) — Verde ' + n('verde') + ', Amarelo ' + n('amarelo') + ', Fixo ' + n('branco') + '.' }),
-                    v.ignorados ? el('div', { text: v.ignorados + ' registro(s) inválido(s) serão ignorados.' }) : '',
-                    el('div', { text: 'Isso substitui os dados atuais (' + Dados.times.length + ' time(s), ' + Dados.pessoas.length + ' pessoa(s)).' }),
-                    el('div', { class: 'actions' }, [
-                        el('button', { type: 'button', class: 'btn btn-danger', text: 'Substituir dados', onclick: confirmarRestauracao }),
-                        el('button', { type: 'button', class: 'btn btn-secondary', text: 'Cancelar', onclick: cancelarRestauracao })
-                    ])
-                );
-            } catch (err) {
-                caixa.className = 'restore-summary is-error';
-                caixa.replaceChildren(el('div', { text: err instanceof SyntaxError ? 'Não foi possível ler o arquivo. Confira se é o .json baixado pelo sistema.' : err.message }));
-            }
-        };
-        leitor.onerror = () => aviso('Não foi possível abrir o arquivo.', 'error');
-        leitor.readAsText(arquivo);
-    }
-
-    function cancelarRestauracao() {
-        restauracaoPendente = null;
-        $('restoreSummary').hidden = true;
-        $('restoreFile').value = '';
-    }
-
-    function confirmarRestauracao() {
-        if (!restauracaoPendente) return;
-        const r = Dados.restaurar(restauracaoPendente);
-        if (!Dados.pessoas.some(p => p.id === tela.focusId)) tela.focusId = null;
-        cancelarRestauracao();
-        guardarTela(); informarSalvo(r); renderTudo();
-        aviso('Backup restaurado: ' + Dados.pessoas.length + ' pessoa(s).');
-    }
-
-    function desfazerRestauracao() {
-        const r = Dados.desfazerRestauracao();
-        if (r.erro) { aviso(r.erro, 'error'); return; }
-        informarSalvo(r); renderTudo();
-        aviso('Dados anteriores recuperados.');
-    }
-
     /* =================================================================
        EVENTOS
        ================================================================= */
-    function abrirAba(painelId) {
-        document.querySelectorAll('.drawer-tabs [role=tab]').forEach(b => b.setAttribute('aria-selected', String(b.dataset.panel === painelId)));
-        document.querySelectorAll('.drawer-body .panel').forEach(p => { p.hidden = p.id !== painelId; });
-    }
-
     function aplicarBusca() {
-        const busca = $('personSearch');
-        const v = busca.value.trim().toLowerCase();
+        const v = $('personSearch').value.trim().toLowerCase();
         const achou = Dados.pessoas.filter(doFiltro).find(p => String(p.name).toLowerCase() === v);
         if (achou) tela.focusId = achou.id;
         else if (!v) tela.focusId = null;
         else return;
-        guardarTela(); renderFiltros(); renderHoje(); renderCalendario();
+        renderFiltros(); renderHoje(); renderCalendario();
     }
 
     function ligarEventos() {
-        $('filterTeam').addEventListener('change', e => { tela.team = e.target.value; guardarTela(); renderTudo(); });
+        $('filterTeam').addEventListener('change', e => { tela.team = e.target.value; renderTudo(); });
         $('yearSelect').addEventListener('change', e => {
             tela.year = parseInt(e.target.value, 10);
             const t = Escala.hoje();
             tela.month = tela.year === t.getFullYear() ? t.getMonth() : null;
-            guardarTela(); renderAbasMes(); renderCalendario();
+            renderAbasMes(); renderCalendario();
         });
 
         const busca = $('personSearch');
@@ -370,44 +200,24 @@
         $('personSearchClear').addEventListener('click', () => { busca.value = ''; aplicarBusca(); busca.focus(); });
 
         $('printBtn').addEventListener('click', () => window.print());
-        $('openManage').addEventListener('click', () => { renderGerenciar(); $('manageDialog').showModal(); });
-        $('closeManage').addEventListener('click', () => $('manageDialog').close());
-        $('manageDialog').addEventListener('click', e => { if (e.target.id === 'manageDialog') e.target.close(); });
-        document.querySelectorAll('.drawer-tabs [role=tab]').forEach(b => b.addEventListener('click', () => abrirAba(b.dataset.panel)));
-
-        $('personForm').addEventListener('submit', adicionarPessoa);
-        $('teamForm').addEventListener('submit', adicionarTime);
-        $('peopleFilter').addEventListener('input', renderGerenciar);
-        $('downloadBtn').addEventListener('click', baixarBackup);
-        $('restoreFile').addEventListener('change', lerArquivoRestauracao);
-        $('undoRestoreBtn').addEventListener('click', desfazerRestauracao);
-
-        // Outra aba alterou os dados: atualiza esta também
-        window.addEventListener('storage', e => { if (e.key === Dados.CHAVE_DADOS) { Dados.carregar(); renderTudo(); } });
     }
 
     /* =================================================================
        INÍCIO
        ================================================================= */
     function iniciar() {
-        const avisos = Dados.carregar();
-
         const t = Escala.hoje();
         const anos = Escala.anosDisponiveis();
-        if (!anos.includes(tela.year)) tela.year = anos.includes(t.getFullYear()) ? t.getFullYear() : anos[0];
-        // Ao abrir no ano atual, mostra o mês corrente (mais útil para consulta)
-        if (tela.year === t.getFullYear() && tela.month !== 'all') tela.month = t.getMonth();
+        tela.year = anos.includes(t.getFullYear()) ? t.getFullYear() : anos[0];
+        if (tela.year === t.getFullYear()) tela.month = t.getMonth();
 
-        // Textos que vêm da configuração
         const r = CONFIG.rodizio;
         $('pageLead').textContent = 'Rodízio de ' + (r.diasPorGrupo * 2) + ' dias úteis entre os grupos Verde e Amarelo, desde '
             + Escala.INICIO.getDate() + ' de ' + Escala.MESES[Escala.INICIO.getMonth()].toLowerCase() + ' de ' + Escala.INICIO.getFullYear() + '.';
         $('footerOrg').textContent = CONFIG.organizacao + ' · Escala de home office';
-        $('senhaInfo').textContent = CONFIG.senhaExclusao;
 
         ligarEventos();
         renderTudo();
-        avisos.forEach(a => setTimeout(() => aviso(a.texto, a.tipo, 8000), 300));
     }
 
     iniciar();

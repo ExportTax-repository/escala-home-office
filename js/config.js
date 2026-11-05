@@ -2,18 +2,8 @@
    CONFIGURAÇÃO DA ESCALA — este é o único arquivo que você precisa editar
    =====================================================================
 
-   COMO ADICIONAR PESSOAS OU TIMES POR AQUI
-   1. Acrescente a pessoa na lista "pessoas" (ou o time na lista "times").
-   2. Aumente o número de "versao" em 1 (ex.: 1 → 2).
-   3. Salve o arquivo e recarregue a página (F5).
-
-   O sistema só ACRESCENTA o que ainda não existe no navegador.
-   Ninguém é apagado ou duplicado. Exclusões e mudanças de grupo continuam
-   sendo feitas pela tela, em "Gerenciar equipe".
-   Ao excluir alguém pela tela, apague também a linha dela aqui; senão ela
-   volta na próxima vez que a "versao" for aumentada.
-
-   Também dá para cadastrar direto pela tela, sem mexer neste arquivo.
+   COMO ADICIONAR OU REMOVER PESSOAS
+   Edite as listas "times" e "pessoas" abaixo, salve e recarregue a página (F5).
 
    Grupos válidos:
      "verde"   → home office nos dias do grupo Verde
@@ -23,14 +13,8 @@
 
 const CONFIG = {
 
-    /* Aumente este número sempre que alterar times ou pessoas abaixo. */
-    versao: 1,
-
     /* Nome exibido no rodapé. */
     organizacao: 'Export Inventory Control',
-
-    /* Senha pedida para excluir pessoas e times. */
-    senhaExclusao: '1234',
 
     /* Regra do rodízio. Só altere se a regra da área mudar:
        a partir de "inicio", 3 dias úteis do grupo Verde e 3 do Amarelo, repetindo. */
