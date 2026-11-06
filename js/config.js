@@ -42,7 +42,7 @@ const CONFIG = {
         // Grupo Amarelo
         { nome: 'Adriel',         time: 'Export Inventory Control', grupo: 'amarelo' },
         { nome: 'Felipe',         time: 'Export Inventory Control', grupo: 'amarelo' },
-        { nome: 'Gabriel Bauer',  time: 'Export Inventory Control', grupo: 'amarelo' },
+        { nome: 'Gabriel o fodao',  time: 'Export Inventory Control', grupo: 'amarelo' },
         { nome: 'Hanna',          time: 'Export Inventory Control', grupo: 'amarelo' },
         { nome: 'Thaina Bispo',   time: 'Export Inventory Control', grupo: 'amarelo' },
         { nome: 'Thiago A',       time: 'Export Inventory Control', grupo: 'amarelo' },
