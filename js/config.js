@@ -46,8 +46,9 @@ const CONFIG = {
         { nome: 'Hanna',          time: 'Export Inventory Control', grupo: 'amarelo' },
         { nome: 'Thaina Bispo',   time: 'Export Inventory Control', grupo: 'amarelo' },
         { nome: 'Thiago A',       time: 'Export Inventory Control', grupo: 'amarelo' },
-        { nome: 'Kathleen Vieira',time: 'Export Inventory Control', grupo: 'amarelo' },
+        
         // Fixos (não entram no rodízio)
+        { nome: 'Kathleen Vieira',time: 'Export Inventory Control', grupo: 'fixo' },
         { nome: 'Luana',          time: 'Export Inventory Control', grupo: 'fixo' },
         { nome: 'Sabrina',        time: 'Export Inventory Control', grupo: 'fixo' }
     ]
