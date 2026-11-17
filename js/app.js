@@ -49,7 +49,17 @@
         $('pageTitle').textContent = tela.team === 'all' ? 'Quem está em home office' : 'Home office · ' + tela.team;
     }
 
+    function renderFixos() {
+        const fixos = doGrupo('branco');
+        $('fixosCard').hidden = !fixos.length;
+        $('fixosList').replaceChildren(...fixos.map(p => el('li', { class: p.id === tela.focusId ? 'is-focus' : null }, [
+            el('strong', { text: p.name }),
+            p.team ? el('span', { text: p.team }) : null
+        ])));
+    }
+
     function renderHoje() {
+        renderFixos();
         const card = $('todayCard');
         card.replaceChildren();
 
@@ -75,8 +85,10 @@
                 ? el('ul', { class: 'today-names' }, emCasa.map(p => el('li', { class: p.id === tela.focusId ? 'is-focus' : null, text: p.name })))
                 : el('p', { class: 'today-foot', text: 'Ninguém do grupo ' + G[grupo] + ' neste filtro.' }));
             const outro = grupo === 'verde' ? 'amarelo' : 'verde';
-            const fixos = doGrupo('branco').length;
-            card.append(el('p', { class: 'today-foot', text: 'No escritório: grupo ' + G[outro] + ' (' + doGrupo(outro).length + ')' + (fixos ? ' e fixos (' + fixos + ')' : '') + '.' }));
+            const fixos = doGrupo('branco');
+            const noOutro = doGrupo(outro);
+            card.append(el('p', { class: 'today-foot', text: 'No escritório: grupo ' + G[outro] + ' (' + noOutro.length + ')' + (fixos.length ? ' e fixos (' + fixos.length + ')' : '') + '.' }));
+            card.append(el('p', { class: 'today-foot', text: 'Total no escritório hoje: ' + (noOutro.length + fixos.length) + ' pessoa(s).' }));
         }
 
         if (foco) {

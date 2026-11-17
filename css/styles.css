@@ -82,6 +82,14 @@ h2 { margin: 0; color: var(--navy); font-size: 18px; font-weight: 700; }
 .today-names { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 6px 18px; }
 .today-names li { font-size: 17px; color: var(--ink); padding: 4px 0; border-bottom: 1px solid var(--line-soft); }
 .today-names li.is-focus { color: var(--navy); font-weight: 700; }
+.fixos-card { margin: 16px 0 28px; padding: 16px 20px; }
+.fixos-card[hidden] { display: none; }
+.fixos-card h2 { font-size: 16px; margin: 0 0 10px; color: var(--navy); }
+.fixos-note { font-weight: 400; font-size: 13px; color: var(--slate); }
+.fixos-list { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px 12px; }
+.fixos-list li { display: flex; flex-direction: column; padding: 6px 12px; border: 1px solid var(--line); border-radius: 6px; background: var(--white); font-size: 15px; color: var(--ink); }
+.fixos-list li span { font-size: 12px; color: var(--slate); }
+.fixos-list li.is-focus { border-color: var(--navy); }
 .today-foot { font-size: 14px; color: var(--slate); margin: 0; }
 .focus-note { background: var(--white); border-radius: 4px; padding: 10px 12px; font-size: 14px; color: var(--ink); border-left: 4px solid var(--navy); }
 .focus-note strong { color: var(--navy); }
